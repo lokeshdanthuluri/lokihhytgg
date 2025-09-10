@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Online Ticket Booking App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #6c63ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #574b90; }
+    .seats {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+      justify-items: center;
+    }
+    .seat {
+      width: 30px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .seat.selected { background: #6c63ff; }
+    .seat.booked { background: #444; cursor: not-allowed; }
+    .summary { font-size: 18px; margin: 15px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div class="card" id="loginPage">
+    <h2>🔐 Login</h2>
+    <input type="text" id="username" placeholder="Enter Username" required>
+    <input type="password" id="password" placeholder="Enter Password" required>
+    <button type="button" onclick="login()">Login</button>
+  </div>
+
+  <!-- Booking Type -->
+  <div class="card hidden" id="typePage">
+    <h2>🚌🚆🎬 Select Booking Type</h2>
+    <select id="bookingType">
+      <option value="movie">Movie</option>
+      <option value="bus">Bus</option>
+      <option value="train">Train</option>
+    </select>
+    <button onclick="goToOptions()">Next</button>
+  </div>
+
+  <!-- Options (Movie / Bus / Train) -->
+  <div class="card hidden" id="optionsPage">
+    <h2 id="optionTitle">Select Option</h2>
+    <select id="optionSelect"></select>
+    <button onclick="goToSeats()">Next</button>
+  </div>
+
+  <!-- Seat Selection -->
+  <div class="card hidden" id="seatPage">
+    <h2>🎟 Choose Your Seats</h2>
+    <div class="seats" id="seats"></div>
+    <div class="summary">
+      Seats: <span id="count">0</span> | Total: ₹<span id="total">0</span>
+    </div>
+    <button onclick="goToPayment()">Proceed to Payment</button>
+  </div>
+
+  <!-- Payment Page -->
+  <div class="card hidden" id="paymentPage">
+    <h2>💳 Payment</h2>
+    <input type="text" placeholder="Card Number">
+    <input type="text" placeholder="Name on Card">
+    <input type="text" placeholder="Expiry Date (MM/YY)">
+    <input type="text" placeholder="CVV">
+    <button onclick="confirmBooking()">Pay & Book</button>
+  </div>
+
+  <!-- Confirmation -->
+  <div class="card hidden" id="confirmPage">
+    <h2>✅ Booking Confirmed!</h2>
+    <p id="confirmMsg"></p>
+    <button onclick="restart()">Book Again</button>
+  </div>
+
+  <script>
+    const loginPage = document.getElementById('loginPage');
+    const typePage = document.getElementById('typePage');
+    const optionsPage = document.getElementById('optionsPage');
+    const seatPage = document.getElementById('seatPage');
+    const paymentPage = document.getElementById('paymentPage');
+    const confirmPage = document.getElementById('confirmPage');
+
+    const seatsContainer = document.getElementById('seats');
+    const optionTitle = document.getElementById('optionTitle');
+    const optionSelect = document.getElementById('optionSelect');
+    const count = document.getElementById('count');
+    const total = document.getElementById('total');
+    const confirmMsg = document.getElementById('confirmMsg');
+
+    let currentPrice = 0;
+    let currentType = "movie";
+
+    // Step 1: Login (any username/password)
+    function login() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      if (!user || !pass) {
+        alert("⚠ Please enter username and password!");
+        return;
+      }
+      loginPage.classList.add('hidden');
+      typePage.classList.remove('hidden');
+      // Clear login fields
+      document.getElementById('username').value = "";
+      document.getElementById('password').value = "";
+    }
+
+    // Step 2: Select Booking Type
+    function goToOptions() {
+      currentType = document.getElementById('bookingType').value;
+      optionSelect.innerHTML = "";
+
+      if (currentType === "movie") {
+        optionTitle.textContent = "🎬 Select Movie";
+        optionSelect.innerHTML = `
+          <option value="200">Avengers (₹200)</option>
+          <option value="250">Inception (₹250)</option>
+          <option value="300">Interstellar (₹300)</option>
+        `;
+      } else if (currentType === "bus") {
+        optionTitle.textContent = "🚌 Select Bus Route";
+        optionSelect.innerHTML = `
+          <option value="150">City A → City B (₹150)</option>
+          <option value="200">City C → City D (₹200)</option>
+          <option value="250">City E → City F (₹250)</option>
+        `;
+      } else if (currentType === "train") {
+        optionTitle.textContent = "🚆 Select Train Route";
+        optionSelect.innerHTML = `
+          <option value="300">Express 101 (₹300)</option>
+          <option value="400">Superfast 202 (₹400)</option>
+          <option value="500">Rajdhani 303 (₹500)</option>
+        `;
+      }
+
+      typePage.classList.add('hidden');
+      optionsPage.classList.remove('hidden');
+    }
+
+    // Step 3: Seat Page
+    function goToSeats() {
+      optionsPage.classList.add('hidden');
+      seatPage.classList.remove('hidden');
+      currentPrice = +optionSelect.value;
+
+      seatsContainer.innerHTML = "";
+      for (let i = 0; i < 40; i++) {
+        const seat = document.createElement('div');
+        seat.classList.add('seat');
+        if (Math.random() < 0.2) seat.classList.add('booked'); // random booked
+        seatsContainer.appendChild(seat);
+      }
+      updateSummary();
+    }
+
+    // Seat Selection
+    seatsContainer.addEventListener('click', e => {
+      if (e.target.classList.contains('seat') && !e.target.classList.contains('booked')) {
+        e.target.classList.toggle('selected');
+        updateSummary();
+      }
+    });
+
+    function updateSummary() {
+      const selectedSeats = document.querySelectorAll('.seat.selected').length;
+      count.textContent = selectedSeats;
+      total.textContent = selectedSeats * currentPrice;
+    }
+
+    // Step 4: Payment
+    function goToPayment() {
+      if (document.querySelectorAll('.seat.selected').length === 0) {
+        alert("⚠ Select at least one seat!");
+        return;
+      }
+      seatPage.classList.add('hidden');
+      paymentPage.classList.remove('hidden');
+    }
+
+    // Step 5: Confirm Booking
+    function confirmBooking() {
+      const selectedSeats = document.querySelectorAll('.seat.selected');
+      selectedSeats.forEach(seat => {
+        seat.classList.remove('selected');
+        seat.classList.add('booked');
+      });
+      paymentPage.classList.add('hidden');
+      confirmPage.classList.remove('hidden');
+      confirmMsg.textContent = `You booked a ${currentType.toUpperCase()} ticket. Thank you 🎉`;
+    }
+
+    // Restart
+    function restart() {
+      // Hide all pages except typePage
+      [optionsPage, seatPage, paymentPage, confirmPage].forEach(page => page.classList.add('hidden'));
+      typePage.classList.remove('hidden');
+
+      // Clear seats and summary
+      seatsContainer.innerHTML = "";
+      count.textContent = 0;
+      total.textContent = 0;
+    }
+  </script>
+</body>
+</html>
